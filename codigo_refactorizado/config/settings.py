@@ -10,7 +10,6 @@ FAVORITES_FILE = 'favorites.json'
 VALID_TOKEN = 'abcd1234'
 AUTH_USERNAME = 'student'
 AUTH_PASSWORD = 'desingp'
-GENERATED_TOKEN = 'abcd12345'
 
 # Mensajes de error (centralizados para consistencia)
 ERROR_MESSAGES = {
