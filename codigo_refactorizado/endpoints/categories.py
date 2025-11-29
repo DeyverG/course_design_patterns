@@ -1,90 +1,58 @@
-from flask import Flask, request
-from flask_restful import Resource, Api, reqparse
-import json
+from flask_restful import Resource, reqparse
 from utils.database_connection import DatabaseConnection
+from utils.auth_decorator import require_auth
+from repositories.category_repository import CategoryRepository
+from config.settings import DATABASE_FILE
 
-def is_valid_token(token):
-    return token == 'abcd1234'
 
 class CategoriesResource(Resource):
+    """Recurso REST para operaciones con categorías."""
+
     def __init__(self):
-
-        self.db = DatabaseConnection('db.json')
-        self.db.connect()
-
-        self.categories_data = self.db.get_categories()
-        self.parser = reqparse.RequestParser()
-
-    def get(self, category_id=None):
-        token = request.headers.get('Authorization')
-        if not token:
-            return { 'message': 'Unauthorized acces token not found'}, 401
-        if not is_valid_token(token):
-           return { 'message': 'Unauthorized invalid token'}, 401
-
-        if category_id is not None:
-            category = next((p for p in self.categories_data if p['id'] == category_id), None)
-            if category is not None:
-                return category
-            else:
-                return {'message': 'Category not found'}, 404
-         
-        return self.categories_data 
-
-    def post(self):
-        token = request.headers.get('Authorization')
-        if not token:
-            return { 'message': 'Unauthorized acces token not found'}, 401
-        if not is_valid_token(token):
-           return { 'message': 'Unauthorized invalid token'}, 401
-
-        self.parser.add_argument('name', type=str, required=True, help='Name of the category')
- 
-        args = self.parser.parse_args()
-        print("*****",args)
-        new_category_name = args['name']
-        if not new_category_name:
-            return {'message': 'Category name is required'}, 400
-
-        categories = self.categories_data
-        if new_category_name in categories:
-            return {'message': 'Category already exists'}, 400
-
-        new_category = {
-                'id': len(self.categories_data) + 1,
-                'name': new_category_name
-        }
-
-        categories.append(new_category)
-        self.categories_data = categories
+        db = DatabaseConnection(DATABASE_FILE)
+        self.repository = CategoryRepository(db)
         
-        self.db.add_category(new_category)
-
-        return {'message': 'Category added successfully'}, 201
-
-    def delete(self):
-        token = request.headers.get('Authorization')
-        if not token:
-            return { 'message': 'Unauthorized acces token not found'}, 401
-        if not is_valid_token(token):
-           return { 'message': 'Unauthorized invalid token'}, 401
-
-        args = self.parser.parse_args()
+        self.parser = reqparse.RequestParser()
         self.parser.add_argument('name', type=str, required=True, help='Name of the category')
+
+    @require_auth
+    def get(self, category_id=None):
+        """
+        Obtiene categorías.
+        
+        - Sin parámetros: retorna todas las categorías
+        - Con category_id: retorna una categoría específica
+        """
+        if category_id is not None:
+            category = self.repository.get_by_id(category_id)
+            if category:
+                return category
+            return {'message': 'Category not found'}, 404
+        
+        return self.repository.get_all()
+
+    @require_auth
+    def post(self):
+        """Crea una nueva categoría."""
         args = self.parser.parse_args()
         category_name = args['name']
- 
-        if not category_name:
-            return {'message': 'Category name is required'}, 400
 
-        category_to_remove = next((cat for cat in self.categories_data if cat["name"] == category_name), None)
+        # Validar que no exista
+        if self.repository.exists(category_name):
+            return {'message': 'Category already exists'}, 400
 
-        if category_to_remove is None:
+        new_category = self.repository.create(category_name)
+        return {'message': 'Category added successfully', 'category': new_category}, 201
+
+    @require_auth
+    def delete(self):
+        """Elimina una categoría por nombre."""
+        args = self.parser.parse_args()
+        category_name = args['name']
+
+        # Validar que exista
+        if not self.repository.exists(category_name):
             return {'message': 'Category not found'}, 404
-        else:
-            categories = [cat for cat in self.categories_data if cat["name"] != category_to_remove]
-            self.categories_data = categories
-            self.db.remove_category(category_name)
 
-            return {'message': 'Category removed successfully'}, 200
-
+        self.repository.remove(category_name)
+        return {'message': 'Category removed successfully'}, 200
