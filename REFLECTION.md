@@ -6,10 +6,8 @@
 3. [Soluciones Aplicadas](#soluciones-aplicadas)
 4. [Patrones de Diseño Utilizados](#patrones-de-diseño-utilizados)
 5. [Principios SOLID Aplicados](#principios-solid-aplicados)
-6. [Estructura del Proyecto](#estructura-del-proyecto)
-7. [Comparación Antes vs Después](#comparación-antes-vs-después)
-8. [Decisiones de Diseño](#decisiones-de-diseño)
-9. [Diagramas](#diagramas)
+6. [Decisiones de Diseño](#decisiones-de-diseño)
+7. [Diagramas](#diagramas)
 
 ---
 
@@ -413,7 +411,7 @@ El código original tenía inconsistencia: `favorites.py` apuntaba a `favorites.
 
 ---
 
-## 📈 Diagramas
+## Diagramas
 
 ### Arquitectura por Capas
 
