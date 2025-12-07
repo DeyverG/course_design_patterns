@@ -4,6 +4,8 @@ from utils.database_connection import DatabaseConnection
 from utils.auth_decorator import require_auth
 from repositories.product_repository import ProductRepository
 from config.settings import DATABASE_FILE
+from notifications.event_manager import EventManager
+from notifications.events.product_events import ProductCreatedEvent
 
 
 class ProductsResource(Resource):
@@ -13,6 +15,7 @@ class ProductsResource(Resource):
         # Inyección de dependencias a través del repositorio
         db = DatabaseConnection(DATABASE_FILE)
         self.repository = ProductRepository(db)
+        self.event_manager = EventManager()
         
         # Parser para validar datos de entrada
         self.parser = reqparse.RequestParser()
@@ -55,5 +58,8 @@ class ProductsResource(Resource):
             category=args['category'],
             price=args['price']
         )
+        
+        event = ProductCreatedEvent(new_product)
+        self.event_manager.emit(event)
         
         return {'message': 'Product added', 'product': new_product}, 201
