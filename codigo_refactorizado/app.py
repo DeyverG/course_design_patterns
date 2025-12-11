@@ -9,6 +9,7 @@ from endpoints import (
 from notifications.event_manager import EventManager
 from notifications.subscribers.log_subscriber import LogSubscriber
 from notifications.subscribers.recommendation_subscriber import RecommendationSubscriber
+from notifications.subscribers.console_subscriber import ConsoleSubscriber
 
 # Aplicación Flask
 app = Flask(__name__)
@@ -19,6 +20,7 @@ event_manager = EventManager()
 event_manager.subscribe('ProductCreatedEvent', LogSubscriber())
 event_manager.subscribe('FavoriteAddedEvent', LogSubscriber())
 event_manager.subscribe('FavoriteAddedEvent', RecommendationSubscriber())
+event_manager.subscribe('ProductCreatedEvent', ConsoleSubscriber())
 
 # Registrar los endpoints
 api.add_resource(AuthenticationResource, '/auth')
